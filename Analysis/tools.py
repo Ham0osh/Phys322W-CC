@@ -122,11 +122,11 @@ class Circuit:
     #take an array of Rv values to try and the parameters for solving the IVP
     #as well has how many points qualifies as "local" for a local maximum, and the error tolerance
     #between different maximums
-    def bifurcation(self, Rv_arr, tspan, y0, t_eval = None, N = 5, error_tol = 1e-3):
+    def bifurcation(self, Rv_arr, tspan, y0, t_eval = None, N = 5, error_tol = 1e-3, **kwargs):
         ret = []
         for Rv in Rv_arr:
             self.Rv = Rv
-            sol_x = self.solve(tspan, y0, t_eval = t_eval).y[0]
+            sol_x = self.solve(tspan, y0, t_eval = t_eval, **kwargs).y[0]
             unique = unique_maxs(sol_x)
             ret.append(unique)
         return np.array(ret)
