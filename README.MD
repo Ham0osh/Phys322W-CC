@@ -28,4 +28,13 @@ Completed:
 
 ### Requirements:
  - Python 3.7
+ - Jupyter Lab (Deepnote)
+ - Numpy <>
+ - SciPy <>
+ - MatPlotLib <>
  
+ import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
+from scipy.integrate import solve_ivp
+import scipy.interpolate as interpolate
