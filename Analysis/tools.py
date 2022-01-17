@@ -127,7 +127,7 @@ class Circuit:
         for Rv in Rv_arr:
             self.Rv = Rv
             sol_x = self.solve(tspan, y0, t_eval = t_eval, **kwargs).y[0]
-            unique = unique_maxs(sol_x)
+            unique = unique_maxs(sol_x, error_tol = error_tol)
             ret.append(unique)
         return np.array(ret)
 

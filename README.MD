@@ -1,6 +1,8 @@
 # Chaotic Circuit
 
-The purpose of this project is to simulate and observe the behaviour of a chaotic jerk circuit which can be modeled as a third order differential equation with a nonlinear term D(x). This project was made to analyse experimental data from time series voltage measurments and compare it to numerical simulations of the ODE.
+The purpose of this project is to simulate and observe the behaviour of a chaotic jerk circuit which can be modeled as a third order
+differential equation with a nonlinear term D(x). This project was made to analyse experimental data from time series voltage measurments
+and compare it to numerical simulations of the ODE.
 
 Started: Jan 11, 2022
 Completed:
