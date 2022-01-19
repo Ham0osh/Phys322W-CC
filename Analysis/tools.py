@@ -61,7 +61,7 @@ class Circuit:
 
     sol = None
     #initializes and stores circuit components
-    def __init__(self, Rv, R = 47, R0 = 157, R2_R1 = 6, V0 = 0.25, C = 1e-6):
+    def __init__(self, Rv, R = 47, R0 = 157, R2_R1 = 6.245, V0 = 0.25, C = 1e-6):
         self.R0 = R0
         self.R = R
         self.ratio_R2_R1 = R2_R1
@@ -95,7 +95,7 @@ class Circuit:
     #if you want it to
     def solve(self,tspan, y0, plot = False, phase = False, ax = None, plt_args = [], plt_kwargs = {}, **kwargs):
 
-        sol = solve_ivp(self.derivatives, tspan, y0, method = 'LSODA', **kwargs)
+        sol = solve_ivp(self.derivatives, tspan, y0, **kwargs)
         
         if plot:
 
