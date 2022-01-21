@@ -6,6 +6,7 @@ import scipy.interpolate as interpolate
 
 
 def local_max(arr, N = 3):
+    '''find local maximums of an array where local is defined as N points on either side'''
     local_maxs = []
     
     #loop through the array
@@ -39,7 +40,7 @@ def local_max(arr, N = 3):
 
 
 def unique_maxs(y: np.array, N = 5, error_tol = 1e-3):
-    #get local maximums and sort to make finding repeats simple
+    '''finds the unique local maximums using local max and where unique is defined as different by the error_tol'''
     maxs, _ = np.sort(local_max(y, N = N))
     
     try:
@@ -56,9 +57,30 @@ def unique_maxs(y: np.array, N = 5, error_tol = 1e-3):
     return unique_maxs
 
 
+def find_splitting(bifurcation):
+    '''takes the result of a bifurcation solve and finds the bifurcation points 2,6,8,16,32,... only limited by the data'''
+    indexes = []
+    split = True
+    split_value = 2
+    for index, sub_array in enumerate(bifurcation[:-20]):
+        split = True
+        
+        if len(sub_array) >= split_value and len(indexes) == int(np.log2(split_value)) - 1:
+            
+            for bi in bifurcation[index: index + 30]:
+                if len(bi) < split_value:
+                    split = False
+            if split:
+                 
+                indexes.append(index)
+                split_value *= 2 
+
+    return np.array(indexes)
+
+
 
 class Circuit:
-
+    '''circuit class to stream line the derivative and solving of the ODE, also bifurcation function is nice to have'''
     sol = None
     #initializes and stores circuit components
     def __init__(self, Rv, R = 47, R0 = 157, R2_R1 = 6.245, V0 = 0.25, C = 1e-6):
@@ -132,9 +154,8 @@ class Circuit:
         return np.array(ret)
 
 
-#I think  it makes the most sense to have this outside since it doesn't depend on class at all
-#but I added the option to have it called from inside the function when solving with phase = True
 def phase_diagram(sol, *args, ax = None, **kwargs):
+    '''takes a solution from solve_ivp formatted in the way that the circuit is and plots a phase diagram, quality of life function'''
     if ax is None:
         ax = plt.gca()
     ax.plot(sol.y[0], sol.y[1], *args, **kwargs)

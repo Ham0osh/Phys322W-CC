@@ -1,5 +1,4 @@
 *.pdf
 .git*
 __pycache__
-*.png
 .deepnote*
