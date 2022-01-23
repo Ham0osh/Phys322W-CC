@@ -163,6 +163,118 @@ def phase_diagram(sol, *args, ax = None, **kwargs):
     
 
     
+def generate_Rv_Plots(filename, saveDirectory = None, x_Time = True, x_primeTime=True, phase = True, spectrum = True, printDat=True,plotFigs = True,mainCol = "c",secondCol = "r",markerShape =".",diffPeakThresh = 30):
+    t, negative_x_prime, x = np.genfromtxt(filename, delimiter = ',', unpack = True, skip_header = 12)
+    '''takes a filename input formatted according to oscilloscopes output and plots all of:
+     - Time serries of x and x'
+     - Phase Portrait
+     - Spectral Density
+     - Prints info about analysis
+     With options to turn off each (-), change colour theme, and savefigs. No return'''
+    t = t-np.min(t)
+    Rv = filename.split('/')[-1][:-4]
+    RvNum = Rv[3:]
+    returnVal = True
+    axs = []
+    
+    #{
+    #    "timeSeries":None,
+    #    "phasePortrait":None,
+    #    "powerSpectrum":None
+    #}
+    
 
+    if x_Time or x_primeTime:
+        fig, ax = plt.subplots(figsize = (8,4))
+        ax.set(
+            title = "Experimental Time Series\nRv = " + RvNum + r" [k$\Omega$]",
+            xlabel = "Time [s]",
+            ylabel = "Voltage [mV]"
+        )
+        if x_Time:
+            ax.plot(t,x*1000,mainCol+markerShape,markersize = 1,label = "x Voltage")
+        if x_primeTime:
+            ax.plot(t,-negative_x_prime*1000,secondCol+markerShape,markersize = 1,label = "x' Voltage")
+        ax.legend()
+        if saveDirectory != None:
+            figSaveName = saveDirectory + "/time_series_"+Rv+".png"
+            plt.savefig(figSaveName,dpi = 600)
+        axs.append(fig)
+        if plotFigs: plt.show();
+        plt.close()
 
+    if phase:
+        fig, ax = plt.subplots(figsize = (6,4))
+        ax.set(
+            title = "Experimental Phase Portrait\nRv = " + RvNum + r" [k$\Omega$]",
+            xlabel = "x [mV]",
+            ylabel = "x' [mV/s]"
+        )
+        ax.plot(x*1000,-negative_x_prime*1000,mainCol+markerShape,markersize = 1,label = r"$R_{v}$ = " + RvNum + r" [k$\Omega$]")
+        ax.legend()
+        if saveDirectory != None:
+            figSaveName = saveDirectory + "/phase_portrait_"+Rv+".png"
+            plt.savefig(figSaveName,dpi = 600)
+        axs.append(fig)
+        if plotFigs: plt.show();
+        plt.close()
 
+    if spectrum:
+        fig, ax = plt.subplots(figsize = (6,4))
+        specMaxF = 16
+        ax.set(
+            title = "Experimental Spectral Power Density\nRv = "+RvNum + r" [k$\Omega$]",
+            xlabel = "Frequency [Hz]",
+            ylabel = r"Normalized Power Density ($\propto$ $V^{2}$)",
+            yscale = "log",
+            xlim = (0,specMaxF)
+        )
+        p = np.abs(np.fft.rfft(x))**2 #xdat is in volts and power = V^2 / R so is perportional up to a resistance
+        f = np.linspace(0,1/(np.average(np.diff(t))*2),len(p))
+        idx = np.argsort(f)
+        powerSpectrumPeaks, spectrumPeakIdx = local_max(p[f<specMaxF], N = 5)
+        ax.plot(f[idx], p[idx],linewidth = 1,color = mainCol,label = "Discrete FFT")
+        ax.plot(f[spectrumPeakIdx], powerSpectrumPeaks, secondCol+markerShape,markersize = 3,label = "Local Maxs")
+        ax.legend()
+        if saveDirectory != None:
+            figSaveName = saveDirectory + "/spectral_density_"+Rv+".png"
+            plt.savefig(figSaveName,dpi = 600)
+        axs.append(fig)
+        if plotFigs: plt.show();
+        plt.close()
+
+    if printDat:
+        dec = 3
+        maxs = np.array(unique_maxs(x, N = 50))
+        # Filter out similar maxes determined by threshold above
+        peakthresh = (10**(-3))*diffPeakThresh #mV
+        tmpIdx = 0
+        while tmpIdx < len(maxs):
+            tmpmax = maxs[tmpIdx]
+            unique = True
+            nextIdx = tmpIdx+1
+            diffs1 = np.abs(tmpmax-maxs[:tmpIdx])
+            diffs2 = np.abs(tmpmax-maxs[nextIdx:])
+            if any(np.append(diffs1,diffs2,axis = 0) < peakthresh):
+                unique = False
+                maxs = np.delete(maxs,tmpIdx)
+            tmpIdx += 1
+        print("Number of Periods =",len(maxs))
+        print("Unique x maxes:",np.around(maxs,dec),"[V]")
+        amplitudeX = np.max(x)-np.min(x)
+        print("x waveform amplitude: ",np.around(amplitudeX,dec),"[V]")
+        amplitudeXprime = np.max(-negative_x_prime)-np.min(-negative_x_prime)
+        print("x' waveform amplitude:",np.around(amplitudeXprime,dec),"[V]")
+        if spectrum:
+            # if data exists print it
+            print("Spectral Power Desnitie Peaks:",np.around(f[spectrumPeakIdx],dec),"[Hz]")
+        else:
+            # if doesnt data exist generate and print it
+            specMaxF = 30 # maximum frequency to care about
+            p = np.abs(np.fft.rfft(x))**2 #xdat is in volts and power = V^2 / R so is perportional up to a resistance
+            f = np.linspace(0,1/(np.average(np.diff(t))*2),len(p))
+            idx = np.argsort(f)
+            powerSpectrumPeaks, spectrumPeakIdx = local_max(p[f<specMaxF], N = 5)
+            print("Spectral Power Desnity Peaks:",np.around(f[spectrumPeakIdx],dec),"[Hz]")
+    
+    return axs
