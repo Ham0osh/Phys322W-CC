@@ -278,3 +278,32 @@ def generate_Rv_Plots(filename, saveDirectory = None, x_Time = True, x_primeTime
             print("Spectral Power Desnity Peaks:",np.around(f[spectrumPeakIdx],dec),"[Hz]")
     
     return axs
+
+
+
+def phase_diagram_data(filenames, directory = None):
+    '''takes filenames as an argument and generate the phase diagrams for them seperately,
+    think this is not going to be used but didn't want to delete it just in case'''
+    # okay I would just copy paste the code lol if you get it then you should do it, I'm gonna write the save thing, I'll just have it take a directory
+    # i can do that if youd like
+    axs = []
+        
+    if type(filenames) != np.array and type(filenames) != list:
+        filenames = [filenames]
+
+    for filename in filenames:
+        fig, ax = plt.subplots()
+        axs.append(ax)
+        t, negative_x_prime, x = np.genfromtxt(filename, delimiter = ',', unpack = True, skip_header = 12)
+        x_prime = -negative_x_prime
+        ax.plot(x, x_prime)
+        ax.set(xlabel = 'x', ylabel = "x'", title = filename.split('/')[-1][:-4])
+        
+        if directory != None:
+            plt.savefig(directory + '/phase_' + filename.split('/')[-1][:-4] + '.png')
+
+        plt.show()
+
+        #repeat the above but with fft! or we can make them into subplots not sure how good the phase plot will look tho
+
+    return axs 
