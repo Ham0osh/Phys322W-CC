@@ -62,7 +62,7 @@ def find_splitting(bifurcation):
     indexes = []
     split = True
     split_value = 2
-    for index, sub_array in enumerate(bifurcation[:-20]):
+    for index, sub_array in enumerate(bifurcation[:-30]):
         split = True
         
         if len(sub_array) >= split_value and len(indexes) == int(np.log2(split_value)) - 1:
@@ -80,7 +80,7 @@ def find_splitting(bifurcation):
 
 
 class Circuit:
-    '''circuit class to stream line the derivative and solving of the ODE, also bifurcation function is nice to have'''
+    '''circuit class to streamline the derivative and solving of the ODE, also bifurcation function is nice to have'''
     sol = None
     #initializes and stores circuit components
     def __init__(self, Rv, R = 47, R0 = 157, R2_R1 = 6.245, V0 = 0.25, C = 1e-6):
@@ -163,7 +163,7 @@ def phase_diagram(sol, *args, ax = None, **kwargs):
     
 
     
-def generate_Rv_Plots(filename, saveDirectory = None, x_Time = True, x_primeTime=True, phase = True, spectrum = True, printDat=True,plotFigs = True,mainCol = "c",secondCol = "r",markerShape =".",diffPeakThresh = 30):
+def generate_Rv_Plots(filename, saveDirectory = None, x_Time = True, x_primeTime=True, phase = True, spectrum = True, printDat=True,plotFigs = True,mainCol = "c",secondCol = "r",markerShape =".",diffPeakThresh = 30,peakN = 500, specN = 500):
     t, negative_x_prime, x = np.genfromtxt(filename, delimiter = ',', unpack = True, skip_header = 12)
     '''takes a filename input formatted according to oscilloscopes output and plots all of:
      - Time serries of x and x'
@@ -176,20 +176,14 @@ def generate_Rv_Plots(filename, saveDirectory = None, x_Time = True, x_primeTime
     RvNum = Rv[3:]
     returnVal = True
     axs = []
-    
-    #{
-    #    "timeSeries":None,
-    #    "phasePortrait":None,
-    #    "powerSpectrum":None
-    #}
-    
 
     if x_Time or x_primeTime:
         fig, ax = plt.subplots(figsize = (8,4))
         ax.set(
-            title = "Experimental Time Series\nRv = " + RvNum + r" [k$\Omega$]",
+            title = "Experimental Time Series",#\nRv = " + RvNum + r" [k$\Omega$]",
             xlabel = "Time [s]",
-            ylabel = "Voltage [mV]"
+            ylabel = "Voltage [mV]",
+            xlim = (0,0.08)
         )
         if x_Time:
             ax.plot(t,x*1000,mainCol+markerShape,markersize = 1,label = "x Voltage")
@@ -206,11 +200,11 @@ def generate_Rv_Plots(filename, saveDirectory = None, x_Time = True, x_primeTime
     if phase:
         fig, ax = plt.subplots(figsize = (6,4))
         ax.set(
-            title = "Experimental Phase Portrait\nRv = " + RvNum + r" [k$\Omega$]",
+            title = "Experimental Phase Portrait",#\nRv = " + RvNum + r" [k$\Omega$]",
             xlabel = "x [mV]",
             ylabel = "x' [mV/s]"
         )
-        ax.plot(x*1000,-negative_x_prime*1000,mainCol+markerShape,markersize = 1,label = r"$R_{v}$ = " + RvNum + r" [k$\Omega$]")
+        ax.plot(x*1000,-negative_x_prime*1000,mainCol+markerShape,markersize = 1,alpha = 0.08,label = r"$R_{v}$ = " + RvNum + r" [k$\Omega$]")
         ax.legend()
         if saveDirectory != None:
             figSaveName = saveDirectory + "/phase_portrait_"+Rv+".png"
@@ -221,9 +215,9 @@ def generate_Rv_Plots(filename, saveDirectory = None, x_Time = True, x_primeTime
 
     if spectrum:
         fig, ax = plt.subplots(figsize = (6,4))
-        specMaxF = 16
+        specMaxF = 1600
         ax.set(
-            title = "Experimental Spectral Power Density\nRv = "+RvNum + r" [k$\Omega$]",
+            title = "Experimental Spectral Power Density",#\nRv = "+RvNum + r" [k$\Omega$]",
             xlabel = "Frequency [Hz]",
             ylabel = r"Normalized Power Density ($\propto$ $V^{2}$)",
             yscale = "log",
@@ -232,9 +226,9 @@ def generate_Rv_Plots(filename, saveDirectory = None, x_Time = True, x_primeTime
         p = np.abs(np.fft.rfft(x))**2 #xdat is in volts and power = V^2 / R so is perportional up to a resistance
         f = np.linspace(0,1/(np.average(np.diff(t))*2),len(p))
         idx = np.argsort(f)
-        powerSpectrumPeaks, spectrumPeakIdx = local_max(p[f<specMaxF], N = 5)
+        powerSpectrumPeaks, spectrumPeakIdx = local_max(p[f<specMaxF], N = specN)
         ax.plot(f[idx], p[idx],linewidth = 1,color = mainCol,label = "Discrete FFT")
-        ax.plot(f[spectrumPeakIdx], powerSpectrumPeaks, secondCol+markerShape,markersize = 3,label = "Local Maxs")
+        ax.plot(f[spectrumPeakIdx], powerSpectrumPeaks, secondCol+markerShape,markersize = 3,label = "Local Maxs") # spectrumPeakIdx is not of intigers any more
         ax.legend()
         if saveDirectory != None:
             figSaveName = saveDirectory + "/spectral_density_"+Rv+".png"
@@ -245,7 +239,7 @@ def generate_Rv_Plots(filename, saveDirectory = None, x_Time = True, x_primeTime
 
     if printDat:
         dec = 3
-        maxs = np.array(unique_maxs(x, N = 50))
+        maxs = np.array(unique_maxs(x, N = peakN))
         # Filter out similar maxes determined by threshold above
         peakthresh = (10**(-3))*diffPeakThresh #mV
         tmpIdx = 0
@@ -274,7 +268,7 @@ def generate_Rv_Plots(filename, saveDirectory = None, x_Time = True, x_primeTime
             p = np.abs(np.fft.rfft(x))**2 #xdat is in volts and power = V^2 / R so is perportional up to a resistance
             f = np.linspace(0,1/(np.average(np.diff(t))*2),len(p))
             idx = np.argsort(f)
-            powerSpectrumPeaks, spectrumPeakIdx = local_max(p[f<specMaxF], N = 5)
+            powerSpectrumPeaks, spectrumPeakIdx = local_max(p[f<specMaxF], N = specN)
             print("Spectral Power Desnity Peaks:",np.around(f[spectrumPeakIdx],dec),"[Hz]")
     
     return axs
